@@ -1,71 +1,71 @@
 # Crypto Trading Bot
 
-An automated BTC accumulation bot built around dollar-cost averaging, with the risk controls that DCA normally lacks: emergency stop-loss, daily loss limits, position sizing, and optional take-profit and trailing-stop exits.
+Bot automatizado de acumulación de BTC construido alrededor de dollar-cost averaging, con los controles de riesgo que al DCA normalmente le faltan: stop-loss de emergencia, límite de pérdida diaria, dimensionamiento de posición y salidas opcionales por take-profit y trailing stop.
 
-**Paper trading is on by default.** The bot simulates against a virtual balance until you explicitly turn it off.
+**El modo simulación viene activado por defecto.** El bot opera contra un balance virtual hasta que lo desactives explícitamente.
 
-## Strategy
+## Estrategia
 
-The core loop runs every `INTERVAL_HOURS` and buys a fixed USDT amount, filtered by RSI so it accumulates into weakness rather than blindly on a timer.
+El loop principal corre cada `INTERVAL_HOURS` y compra un monto fijo en USDT, filtrado por RSI para acumular en debilidad en lugar de comprar a ciegas por temporizador.
 
-Two modes:
+Dos modos:
 
-- **Pure DCA** (`PURE_DCA = True`) — accumulate only, never sell. Exits are disabled.
-- **DCA with exits** (`PURE_DCA = False`) — adds take-profit at +20% and a trailing stop at 8% off the high.
+- **DCA puro** (`PURE_DCA = True`) — solo acumula, nunca vende. Las salidas quedan desactivadas.
+- **DCA con salidas** (`PURE_DCA = False`) — agrega take-profit en +20% y trailing stop a 8% del máximo.
 
-Protections run in both modes:
+Las protecciones corren en ambos modos:
 
-| Control | Default | Behavior |
+| Control | Valor por defecto | Comportamiento |
 |---|---|---|
-| Emergency stop-loss | 10% | Pauses buying when price falls 10% below average entry |
-| Daily loss limit | 5% | Pauses for the day when P&L breaches the threshold |
-| Risk per trade | 10% | Caps the share of available balance used per trade |
-| RSI filter | buy below 35 | Only buys when 1h RSI signals oversold |
+| Stop-loss de emergencia | 10% | Pausa las compras si el precio cae 10% bajo el precio promedio de entrada |
+| Límite de pérdida diaria | 5% | Pausa el día cuando el P&L supera el umbral |
+| Riesgo por operación | 10% | Limita la porción del balance disponible que se usa por operación |
+| Filtro RSI | compra bajo 35 | Solo compra cuando el RSI de 1h indica sobreventa |
 
 ## Stack
 
-| Technology | Role |
+| Tecnología | Rol |
 |---|---|
-| Python 3 | Language |
-| python-binance | Market data and order execution |
-| Flask | Local monitoring dashboard |
-| SMTP / Telegram | Trade notifications |
+| Python 3 | Lenguaje |
+| python-binance | Datos de mercado y ejecución de órdenes |
+| Flask | Dashboard local de monitoreo |
+| SMTP / Telegram | Notificaciones de operaciones |
 
-## Project structure
+## Estructura
 
 ```
-main.py               # Main loop: price → exits → protections → strategy
-backtest.py           # Run the strategy over historical data
-dashboard.py          # Flask dashboard, auto-refreshing chart of trades
-report.py             # P&L reporting
+main.py               # Loop principal: precio → salidas → protecciones → estrategia
+backtest.py           # Corre la estrategia sobre datos históricos
+dashboard.py          # Dashboard Flask con gráfico de operaciones autorrefrescante
+report.py             # Reporte de P&L
 
 src/
-├── config.py         # All tunable parameters
-├── bot.py            # Binance client and price fetching
-├── strategy/dca.py   # DCA entry logic
+├── config.py         # Todos los parámetros configurables
+├── bot.py            # Cliente de Binance y consulta de precio
+├── strategy/dca.py   # Lógica de entrada DCA
 ├── indicators.py     # RSI
-├── stop_loss.py      # Emergency stop-loss
-├── exit_strategy.py  # Take-profit and trailing stop
-├── risk.py           # Position sizing and daily loss limit
-├── backtester.py     # Backtest engine
-├── state.py          # Persisted bot state
-├── logger.py         # Trade log
-└── notifier.py       # Email and Telegram alerts
+├── stop_loss.py      # Stop-loss de emergencia
+├── exit_strategy.py  # Take-profit y trailing stop
+├── risk.py           # Dimensionamiento y límite de pérdida diaria
+├── backtester.py     # Motor de backtesting
+├── state.py          # Estado persistido del bot
+├── logger.py         # Registro de operaciones
+└── notifier.py       # Alertas por correo y Telegram
 ```
 
-## Running
+## Ejecutar
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env       # add your API keys
+cp .env.example .env       # agrega tus API keys
 
-python main.py             # start the bot
-python backtest.py         # backtest the strategy
-python dashboard.py        # dashboard at localhost:5000
-python report.py           # print P&L summary
+python main.py             # inicia el bot
+python backtest.py         # backtest de la estrategia
+python dashboard.py        # dashboard en localhost:5000
+python report.py           # resumen de P&L
 ```
 
-## Environment variables
+## Variables de entorno
 
 ```env
 BINANCE_API_KEY=
@@ -77,6 +77,6 @@ TELEGRAM_TOKEN=
 TELEGRAM_CHAT_ID=
 ```
 
-## Disclaimer
+## Advertencia
 
-This is a personal project for learning algorithmic trading, not financial advice. Backtested results do not predict future returns. Run it in paper mode and read the code before flipping `PAPER_TRADING` to `False` — at that point it moves real money.
+Este es un proyecto personal para aprender trading algorítmico, no asesoría financiera. Los resultados de un backtest no predicen rendimientos futuros. Córrelo en modo simulación y lee el código antes de poner `PAPER_TRADING` en `False`: a partir de ahí mueve dinero real.
